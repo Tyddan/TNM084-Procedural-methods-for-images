@@ -1,0 +1,96 @@
+// Simple Example Shader with three inputs two outputs, to demo the syntax.
+// For more information read the OSL Language Specifictaion:
+//    https://github.com/imageworks/OpenShadingLanguage/blob/master/src/doc/osl-languagespec.pdf 
+// The "More..." button links to the 3ds Max OSL shader GitHub page on ADN
+
+
+// Voronoi noise weitten by Stefan (http://weber.itn.liu.se/~stegu/TNM084-2018/osl/voronoi.osl)
+color cellnoise_color(point p)
+{
+	float r = cellnoise(p);
+	float g = cellnoise(point(p[1], p[0], p[2]));
+	float b = cellnoise(point(p[1], p[2], p[0]));
+
+	return color(r, g, b);
+}
+
+/* Cellular "Voronoi" noise, similar to Worley noise */
+void voronoi(
+	point p,
+	output float da[2],
+	output point pa[2]
+)
+{
+	/* returns distances in da and point coords in pa */
+	int xx, yy, zz, xi, yi, zi;
+
+	xi = (int)floor(p[0]);
+	yi = (int)floor(p[1]);
+	zi = (int)floor(p[2]);
+
+	da[0] = 1e10;
+	da[1] = 1e10;
+
+	for (xx = xi - 1; xx <= xi + 1; xx++) {
+		for (yy = yi - 1; yy <= yi + 1; yy++) {
+			for (zz = zi - 1; zz <= zi + 1; zz++) {
+				point ip = point(xx, yy, zz);
+				point vp = (point)cellnoise_color(ip);
+				vector pd = p - (vp + ip);
+				float d = length(pd);
+
+				vp += point(xx, yy, zz);
+
+				if (d < da[0]) {
+					da[1] = da[0];
+					da[0] = d;
+					pa[1] = pa[0];
+					pa[0] = vp;
+				}
+				else if (d < da[1]) {
+					da[1] = d;
+					pa[1] = vp;
+				}
+			}
+		}
+	}
+}
+
+shader Color
+	[[ string help="Shader that generates an interesting color for the crystal" ]]
+(
+	//Inputs
+	color color1 = color(1.0, 1.0, 1.0)[[ string label = "Color 1"]],
+	color color2 = color(1.0, 1.0, 1.0)[[ string label = "Color 2"]],
+	color specColor = color(1.0, 1.0, 1.0)[[ string label = "specular color"]],
+	float inOpacity = 1.0 [[ string label = "Opacity",  float min = 0.0, float max = 1.0 ]],
+	float ratio = 1.0 [[ string label = "Color2 ratio",  float min = 0.0, float max = 10.0 ]],
+	float inSpecular = 1.0 [[ string label = "specular",  float min = 0.0, float max = 10.0 ]],
+	float len   = 1.0 [[ string label = "Length of edges", float min = 0.2, float max = 1.0 ]],
+	float strength = 50.0 [[ string label = "Strength", float min = 1.0, float max = 80.0]],
+	//Outputs
+	output color Out = 0.0,
+	output float Opacity = 1.0,
+	output float specular = 1.0,
+	output color specularColor = 0.0,
+	output float tiles = 0.0,
+	output float spots = 0,
+	output float Displacement = 0.0,
+
+)
+{
+	float da[2];
+	point pa[2];
+	voronoi(0.1*P, da, pa);
+	tiles = 1 - (da[1]-da[0]);
+	spots = da[0];
+	
+	
+	Out =  mix(color2, color1*0.7, tiles-0.65);
+	
+	
+
+	Opacity = inOpacity;
+	specular = inSpecular;
+	specularColor = specColor;
+}
