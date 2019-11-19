@@ -1,8 +1,3 @@
-// Simple Example Shader with three inputs two outputs, to demo the syntax.
-// For more information read the OSL Language Specifictaion:
-//    https://github.com/imageworks/OpenShadingLanguage/blob/master/src/doc/osl-languagespec.pdf 
-// The "More..." button links to the 3ds Max OSL shader GitHub page on ADN
-
 
 // Voronoi noise weitten by Stefan (http://weber.itn.liu.se/~stegu/TNM084-2018/osl/voronoi.osl)
 color cellnoise_color(point p)
@@ -57,7 +52,7 @@ void voronoi(
 }
 
 shader Color
-	[[ string help="Shader that generates an interesting color for the crystal" ]]
+	[[ string help="Shader that generates an interesting color for the ruby" ]]
 (
 	//Inputs
 	color color1 = color(1.0, 1.0, 1.0)[[ string label = "Color 1"]],
@@ -67,30 +62,39 @@ shader Color
 	float ratio = 1.0 [[ string label = "Color2 ratio",  float min = 0.0, float max = 10.0 ]],
 	float inSpecular = 1.0 [[ string label = "specular",  float min = 0.0, float max = 10.0 ]],
 	float len   = 1.0 [[ string label = "Length of edges", float min = 0.2, float max = 1.0 ]],
-	float strength = 50.0 [[ string label = "Strength", float min = 1.0, float max = 80.0]],
+	float strength = 1.0 [[ string label = "Strength", float min = 1.0, float max = 20.0]],
+	float whiteProportion = 0.7  [[ float min = 0.0, float max = 1.0 ]],
+	float trans = 0.5 [[ string label = "transmission", float min = 0.0, float max = 1.0 ]],
 	//Outputs
+	
+	output float Displacement = 0.0,
 	output color Out = 0.0,
+	
 	output float Opacity = 1.0,
 	output float specular = 1.0,
 	output color specularColor = 0.0,
 	output float tiles = 0.0,
-	output float spots = 0,
-	output float Displacement = 0.0,
+	output float transmission = 0.0,
+
 
 )
 {
 	float da[2];
 	point pa[2];
+	//Scale P to get larger cells
 	voronoi(0.1*P, da, pa);
-	tiles = 1 - (da[1]-da[0]);
-	spots = da[0];
-	
-	
-	Out =  mix(color2, color1*0.7, tiles-0.65);
+	tiles = 1 - (da[1]-da[0]*da[0]);
+
+	//Displacement with scaling
+	Displacement = strength *tiles;
+	//remove some of the cell lines with a scaling
+	float crystalMix = aastep(whiteProportion, tiles);
+	Out =  mix(color2, color1, crystalMix);
 	
 	
 
 	Opacity = inOpacity;
 	specular = inSpecular;
 	specularColor = specColor;
+	transmission = trans;
 }
