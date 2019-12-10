@@ -10,3 +10,7 @@ Rubin ring
 Lab 3:
 Kokande knäck
 ![img](https://github.com/Tyddan/TNM084-Procedural-methods-for-images/blob/master/lab3/progress/kn%C3%A4ckis4.png)
+
+Lab 4:
+Kilimanjaro i TerraGen
+![img](https://github.com/Tyddan/TNM084-Procedural-methods-for-images/blob/master/lab4/Kilimanjaro.jpg)
